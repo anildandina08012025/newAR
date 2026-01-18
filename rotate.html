@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>AR Atom - Touch to Rotate</title>
+  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+</head>
+
+<body>
+  <script>
+    // 1. COMPONENT: Handles Electron Orbit Animation
+    AFRAME.registerComponent('orbit-animation', {
+      schema: { speed: {type: 'number', default: 1} },
+      tick: function (time, timeDelta) {
+        var rotation = this.el.getAttribute('rotation');
+        this.el.setAttribute('rotation', {
+          x: rotation.x,
+          y: rotation.y + (this.data.speed * (timeDelta / 10)),
+          z: rotation.z
+        });
+      }
+    });
+
+    // 2. COMPONENT: Handles Finger Swipe to Rotate
+    AFRAME.registerComponent('finger-rotate', {
+      schema: { speed: { default: 2 } },
+      init: function () {
+        this.ifMouseDown = false;
+        this.x_cord = 0;
+        this.y_cord = 0;
+        
+        // Listen for touch start (finger touches screen)
+        window.addEventListener('touchstart', (e) => {
+          this.ifMouseDown = true;
+          this.x_cord = e.touches[0].clientX;
+          this.y_cord = e.touches[0].clientY;
+        });
+
+        // Listen for touch end (finger leaves screen)
+        window.addEventListener('touchend', () => {
+          this.ifMouseDown = false;
+        });
+
+        // Listen for touch move (finger drags across screen)
+        window.addEventListener('touchmove', (e) => {
+          if (this.ifMouseDown) {
+            // Get current finger position
+            var temp_x = e.touches[0].clientX;
+            var temp_y = e.touches[0].clientY;
+            
+            // Calculate difference
+            var f_x = (temp_x - this.x_cord);
+            var f_y = (temp_y - this.y_cord);
+            
+            // Rotate the Atom object
+            // We rotate Y (left/right) based on X finger movement
+            // We rotate X (up/down) based on Y finger movement
+            this.el.object3D.rotation.y += f_x * this.data.speed / 1000;
+            this.el.object3D.rotation.x += f_y * this.data.speed / 1000;
+            
+            // Reset coordinates for next frame
+            this.x_cord = temp_x;
+            this.y_cord = temp_y;
+          }
+        });
+      }
+    });
+  </script>
+
+  <!-- AR Scene -->
+  <a-scene vr-mode-ui="enabled: true" renderer="antialias: true; alpha: true">
+    
+    <!-- LIGHTING -->
+    <a-light type="directional" intensity="2" position="2 4 5"></a-light>
+    <a-light type="ambient" intensity="0.6"></a-light>
+
+    <!-- THE ATOM CONTAINER -->
+    <!-- Positioned -2 meters away. Added "finger-rotate" component here -->
+    <a-entity id="atom-model" position="0 1.5 -2" scale="0.3 0.3 0.3" finger-rotate>
+      
+      <!-- Inner Rotation (Automatic spin) -->
+      <!-- We keep a slow auto-spin, but you can override it with your finger -->
+      <a-entity>
+        
+        <!-- NUCLEUS -->
+        <a-entity>
+            <a-sphere position="0.2 0.2 0" radius="0.25" color="#FF3333"></a-sphere>
+            <a-sphere position="-0.2 -0.2 0" radius="0.25" color="#FF3333"></a-sphere>
+            <a-sphere position="0.2 -0.2 0.2" radius="0.25" color="#FF3333"></a-sphere>
+            <a-sphere position="-0.2 0.2 0.1" radius="0.25" color="#3333FF"></a-sphere>
+            <a-sphere position="0 0 -0.25" radius="0.25" color="#3333FF"></a-sphere>
+            <a-sphere position="0.1 0.1 -0.1" radius="0.25" color="#3333FF"></a-sphere>
+        </a-entity>
+
+        <!-- ORBITS & ELECTRONS -->
+        <a-entity rotation="0 0 45" orbit-animation="speed: 3">
+             <a-torus color="#BBB" radius="1.5" radius-tubular="0.01" rotation="90 0 0" opacity="0.6"></a-torus>
+             <a-sphere position="1.5 0 0" radius="0.1" color="#FFFF00" material="emissive: #FFFF00; emissiveIntensity: 1"></a-sphere>
+        </a-entity>
+        
+        <a-entity rotation="0 180 -45" orbit-animation="speed: 3.5">
+             <a-torus color="#BBB" radius="1.5" radius-tubular="0.01" rotation="90 0 0" opacity="0.6"></a-torus>
+             <a-sphere position="1.5 0 0" radius="0.1" color="#FFFF00" material="emissive: #FFFF00; emissiveIntensity: 1"></a-sphere>
+        </a-entity>
+
+        <a-entity rotation="45 90 0" orbit-animation="speed: 2">
+             <a-torus color="#BBB" radius="2.5" radius-tubular="0.01" rotation="90 0 0" opacity="0.6"></a-torus>
+             <a-sphere position="2.5 0 0" radius="0.1" color="#FFFF00" material="emissive: #FFFF00; emissiveIntensity: 1"></a-sphere>
+        </a-entity>
+      </a-entity>
+
+    </a-entity>
+
+  </a-scene>
+</body>
+</html>
