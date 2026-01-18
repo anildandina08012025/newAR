@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>AR Atom - Place in Room</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  
+  <!-- A-Frame Library -->
+  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+  <!-- AR Component -->
+  <script src="https://unpkg.com/aframe-hit-test-controls@2.0.0/dist/aframe-hit-test-controls.min.js"></script>
+
+  <style>
+    /* Styling for the DOM Overlay (Instructions) */
+    #overlay {
+      position: absolute;
+      z-index: 5;
+      top: 20px;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      color: white;
+      font-family: sans-serif;
+      pointer-events: none;
+      text-shadow: 1px 1px 2px black;
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+  
+  <div id="overlay">
+    <h1>Atom AR</h1>
+    <p>Point camera at floor & Tap to Place</p>
+  </div>
+
+  <script>
+    // 1. COMPONENT: Handles the "Place on Floor" logic
+    AFRAME.registerComponent('ar-controller', {
+      init: function () {
+        this.reticle = document.querySelector("#reticle");
+        this.atom = document.querySelector("#atom-model");
+        this.placed = false;
+        
+        // Show overlay when entering AR
+        this.el.sceneEl.addEventListener('enter-vr', () => {
+          if (this.el.sceneEl.is('ar-mode')) {
+            document.getElementById('overlay').style.display = 'block';
+          }
+        });
+
+        this.el.sceneEl.addEventListener('exit-vr', () => {
+          document.getElementById('overlay').style.display = 'none';
+        });
+
+        // Listen for Tap/Click
+        this.el.sceneEl.addEventListener('click', (e) => {
+          if (!this.reticle.getAttribute('visible')) return;
+          
+          // Move Atom to Reticle position
+          const position = this.reticle.getAttribute('position');
+          this.atom.setAttribute('position', position);
+          this.atom.setAttribute('visible', 'true');
+          
+          // "Face" the user initially (optional)
+          // this.atom.object3D.lookAt(this.el.sceneEl.camera.el.object3D.position);
+          // this.atom.object3D.rotation.x = 0; // Keep it flat
+        });
+      },
+      
+      tick: function () {
+        // If reticle is visible, it means we found a floor
+        // Use this loop if we wanted continuous updates
+      }
+    });
+
+    // 2. COMPONENT: Electron Animation (Same as before)
+    AFRAME.registerComponent('orbit-animation', {
+        schema: {
+          speed: {type: 'number', default: 1}
+        },
+        tick: function (time, timeDelta) {
+          var rotation = this.el.getAttribute('rotation');
+          this.el.setAttribute('rotation', {
+            x: rotation.x,
+            y: rotation.y + (this.data.speed * (timeDelta / 10)),
+            z: rotation.z
+          });
+        }
+      });
+  </script>
+
+  <!-- THE SCENE -->
+  <!-- webxr feature "hit-test" is what scans the floor -->
+  <a-scene 
+    webxr="requiredFeatures: hit-test, local-floor; overlayElement: #overlay" 
+    ar-controller
+    renderer="colorManagement: true; physicallyCorrectLights: true"
+    background="color: #222">
+
+    <!-- ASSETS -->
+    <a-assets>
+      <!-- Define colors or textures here if needed -->
+    </a-assets>
+
+    <!-- LIGHTING (Make it bright for AR) -->
+    <a-light type="directional" intensity="2" position="2 4 1"></a-light>
+    <a-light type="ambient" intensity="0.5"></a-light>
+
+    <!-- THE RETICLE (The target ring on the floor) -->
+    <!-- This entity automatically tracks real-world surfaces -->
+    <a-entity id="reticle" 
+              ar-hit-test="target: #atom-model;"
+              position="0 0 -2"
+              visible="false">
+      <a-ring rotation="-90 0 0" radius-inner="0.1" radius-outer="0.12" color="white"></a-ring>
+      <a-circle rotation="-90 0 0" radius="0.05" color="white"></a-circle>
+    </a-entity>
+
+    <!-- THE ATOM GROUP -->
+    <!-- Initially hidden, will appear when placed -->
+    <a-entity id="atom-model" visible="false" scale="0.1 0.1 0.1">
+      
+      <!-- Container for nice rotation animation of whole atom -->
+      <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 30000; easing: linear">
+        
+        <!-- NUCLEUS -->
+        <a-entity>
+            <a-sphere position="0.2 0.2 0" radius="0.25" color="#FF3333"></a-sphere>
+            <a-sphere position="-0.2 -0.2 0" radius="0.25" color="#FF3333"></a-sphere>
+            <a-sphere position="0.2 -0.2 0.2" radius="0.25" color="#FF3333"></a-sphere>
+            <a-sphere position="-0.2 0.2 0.1" radius="0.25" color="#3333FF"></a-sphere>
+            <a-sphere position="0 0 -0.25" radius="0.25" color="#3333FF"></a-sphere>
+            <a-sphere position="0.1 0.1 -0.1" radius="0.25" color="#3333FF"></a-sphere>
+        </a-entity>
+
+        <!-- ORBITS & ELECTRONS -->
+        <a-entity rotation="0 0 45" orbit-animation="speed: 3">
+             <a-torus color="#888" radius="1.5" radius-tubular="0.01" rotation="90 0 0" opacity="0.5"></a-torus>
+             <a-sphere position="1.5 0 0" radius="0.1" color="#FFFF00" material="emissive: #FFFF00; emissiveIntensity: 1"></a-sphere>
+        </a-entity>
+        
+        <a-entity rotation="0 180 -45" orbit-animation="speed: 3.5">
+             <a-torus color="#888" radius="1.5" radius-tubular="0.01" rotation="90 0 0" opacity="0.5"></a-torus>
+             <a-sphere position="1.5 0 0" radius="0.1" color="#FFFF00" material="emissive: #FFFF00; emissiveIntensity: 1"></a-sphere>
+        </a-entity>
+
+        <a-entity rotation="45 90 0" orbit-animation="speed: 2">
+             <a-torus color="#888" radius="2.5" radius-tubular="0.01" rotation="90 0 0" opacity="0.5"></a-torus>
+             <a-sphere position="2.5 0 0" radius="0.1" color="#FFFF00" material="emissive: #FFFF00; emissiveIntensity: 1"></a-sphere>
+        </a-entity>
+      </a-entity>
+      
+      <!-- Shadow Plane (Fake shadow to make it look grounded) -->
+      <a-circle rotation="-90 0 0" radius="3" color="black" opacity="0.3" position="0 -1 0"></a-circle>
+
+    </a-entity>
+
+  </a-scene>
+</body>
+</html>
