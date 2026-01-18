@@ -1,279 +1,147 @@
-this.el.setAttribute('rotation', {
-          x: rotation
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
-  <.x,
-          y: rotation.y + (this.data.speed * (timeDelta / 1title>Carbon Atom - Professional AR</title>
-  <script src="https://aframe.io/releases/0)),
+  <title>Carbon Atom (Electronic Structure)</title>
+  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+  <!-- Library to make text always face the user -->
+  <script src="https://unpkg.com/aframe-look-at-component@0.8.0/dist/aframe-look-at-component.min.js"></script>
+</head>
+
+<body>
+  <script>
+    // 1. ANIMATION: Moves electrons around orbits
+    AFRAME.registerComponent('orbit-animation', {
+      schema: { speed: {type: 'number', default: 1} },
+      tick: function (time, timeDelta) {
+        var rotation = this.el.getAttribute('rotation');
+        this.el.setAttribute('rotation', {
+          x: rotation.x,
+          y: rotation.y + (this.data.speed * (timeDelta / 10)),
           z: rotation.z
         });
       }
     });
 
-    // 2.1.4.0/aframe.min.js"></script>
-</head>
-
-<body>
-  < SWIPE ROTATION (Swipe anywhere on screen)
-    AFRAME.registerComponent('scene-rotation-handler', {script>
-    // 1. COMPONENT: Smooth Orbit Animation
-    AFRAME.registerComponent('orbit-
-      init: function () {
-        this.atom = document.querySelector('#atom-group');
-        thisanimation', {
-      schema: { 
-        speed: {type: 'number', default: 1},
-.isDragging = false;
-        this.startMouseX = 0;
-        this.currentRotationY        axis: {type: 'vec3', default: {x: 0, y: 1, z = 0;
-
-        document.addEventListener('touchstart', (evt) => {
-          this.isDragging =: 0}}
-      },
-      tick: function (time, timeDelta) {
-        var el = this.el true;
-          this.startMouseX = evt.touches[0].clientX;
-          this.currentRotation.object3D;
-        var axis = this.data.axis;
-        var amount = (this.data.Y = this.atom.object3D.rotation.y;
-        });
-
-        document.addEventListener('touchspeed * timeDelta) / 1000;
-        
-        el.rotateOnAxis(new THREE.Vector3(axis.x, axis.y, axis.z), amount);
-      }
-    });
-
-    //move', (evt) => {
-          if (!this.isDragging) return;
-          var distance = evt.touches[0].clientX - this.startMouseX;
-          this.atom.object3D.rotation.y = this.currentRotationY + (distance / 100);
-        });
-
-        document.addEventListener('tou 2. COMPONENT: Full Screen Rotation (Swipe anywhere to rotate)
-    AFRAME.registerComponent('chend', () => {
-          this.isDragging = false;
-        });
-      }
-    });
-scene-rotation-handler', {
+    // 2. INTERACTION: Swipe screen to rotate the whole atom
+    AFRAME.registerComponent('scene-rotation-handler', {
       init: function () {
         this.atom = document.querySelector('#carbon-model');
         this.isDragging = false;
         this.startMouseX = 0;
-        this  </script>
-
-  <!-- AR SCENE -->
-  <a-scene 
-    vr-mode-ui="enabled: true" 
-    renderer="antialias: true; alpha: true; colorManagement: true"
-    scene-rotation-handler>
-    
-    <!-- LIGHTING (High contrast for professional look) -->
-.currentRotationY = 0;
+        this.currentRotationY = 0;
 
         document.addEventListener('touchstart', (evt) => {
           this.isDragging = true;
           this.startMouseX = evt.touches[0].clientX;
-              <a-light type="directional" intensity="2.5" position="2 4 4" color="#this.currentRotationY = this.atom.object3D.rotation.y;
+          this.currentRotationY = this.atom.object3D.rotation.y;
         });
 
         document.addEventListener('touchmove', (evt) => {
           if (!this.isDragging) return;
-          ffffff"></a-light>
-    <a-light type="ambient" intensity="0.8" color="#var currentMouseX = evt.touches[0].clientX;
-          var distance = currentMouseX - this.333"></a-light>
-    <!-- Blue backlight for sci-fi feel -->
-    <a-lightstartMouseX;
-          this.atom.object3D.rotation.y = this.currentRotationY + type="point" intensity="1" position="-2 0 -2" color="#0088ff"></a-light (distance / 150);
+          var distance = evt.touches[0].clientX - this.startMouseX;
+          // Divide by 150 to control sensitivity
+          this.atom.object3D.rotation.y = this.currentRotationY + (distance / 150);
         });
 
         document.addEventListener('touchend', () => {
->
-
-    <!-- MAIN ATOM CONTAINER (Floating in front of camera) -->
-    <a-entity id="atom-          this.isDragging = false;
+          this.isDragging = false;
         });
       }
     });
   </script>
 
-  group" position="0 1.2 -2.5" scale="0.35 0.35 0<!-- SCENE SETTINGS -->
+  <!-- THE SCENE -->
   <a-scene 
-    vr-mode-ui="enabled: true.35">
-
-      <!-- ============================================ -->
-      <!-- 1. THE NUCLEUS (6" 
+    vr-mode-ui="enabled: true" 
     renderer="antialias: true; colorManagement: true; alpha: true"
-    scene-rotation Protons, 6 Neutrons)       -->
-      <!--    Colors: Pink (Protons), Cyan (Neutrons)-handler>
+    scene-rotation-handler>
 
-    <!-- LIGHTING (Studio Lighting for nice reflections) -->
-    <a-light type="directional"   -->
-      <!-- ============================================ -->
-      <a-entity animation="property: rotation; to:  intensity="2" position="-2 4 4" color="#ffffff"></a-light>
-    <a-light360 360 0; loop: true; dur: 25000; easing: linear type="directional" intensity="1" position="2 -2 2" color="#aaccff"></a-">
-        
-        <!-- Protons (Hot Pink) -->
-        <a-sphere position="0.15light>
-    <a-light type="ambient" intensity="0.5" color="#333"></a- 0.15 0" radius="0.22" color="#FF0055" metalnesslight>
+    <!-- LIGHTING (High quality studio lights) -->
+    <a-light type="directional" intensity="2" position="-2 4 4" color="#ffffff"></a-light>
+    <a-light type="directional" intensity="1" position="2 -2 2" color="#aaccff"></a-light>
+    <a-light type="ambient" intensity="0.5" color="#333"></a-light>
 
-    <!-- MAIN ATOM CONTAINER (Floating in front of camera) -->
-    <a-entity id="carbon="0.6" roughness="0.2"></a-sphere>
-        <a-sphere position="-0-model" position="0 1.2 -2.5" scale="0.35 0.3.15 -0.1 0.1" radius="0.22" color="#FF00555 0.35">
+    <!-- MAIN ATOM GROUP -->
+    <a-entity id="carbon-model" position="0 1.5 -3" scale="0.4 0.4 0.4">
       
-      <!-- TITLE TEXT -->
-      <a-text value="Carbon (C" metalness="0.6" roughness="0.2"></a-sphere>
-        <a-sphere)" position="0 3.5 0" align="center" width="10" color="white" shader=" position="0 0.2 -0.2" radius="0.22" color="#FF0055"msdf" font="https://raw.githubusercontent.com/etiennepinchon/aframe-fonts/ metalness="0.6" roughness="0.2"></a-sphere>
-        <a-sphere positionmaster/fonts/roboto/Roboto-Bold.json"></a-text>
-      <a-text value="Atomic="0.2 -0.2 -0.1" radius="0.22" color="#FF00 Number: 6" position="0 3 0" align="center" width="6" color="#AAA55" metalness="0.6" roughness="0.2"></a-sphere>
-        <a"></a-text>
+      <!-- TITLE LABEL (Floating above) -->
+      <a-text value="CARBON (C)" position="0 4 0" align="center" width="8" color="white" look-at="[camera]"></a-text>
+      <a-text value="Atomic No: 6" position="0 3.5 0" align="center" width="5" color="#AAA" look-at="[camera]"></a-text>
 
       <!-- 1. NUCLEUS (6 Protons, 6 Neutrons) -->
--sphere position="-0.2 0.1 0.2" radius="0.22" color="#FF0      <!-- We make them shiny (metalness) -->
-      <a-entity animation="property: rotation; to: 055" metalness="0.6" roughness="0.2"></a-sphere>
-        <360 360 0; loop: true; dur: 25000; easing: lineara-sphere position="0 -0.1 -0.2" radius="0.22" color="#FF0055" metalness="0.6" roughness="0.2"></a-sphere>
+      <a-entity animation="property: rotation; to: 360 360 0; loop: true; dur: 25000; easing: linear">
+        <!-- Reusable shapes -->
+        <a-mixin id="proton" geometry="primitive: sphere; radius: 0.3" material="color: #FF0055; metalness: 0.6; roughness: 0.2"></a-mixin>
+        <a-mixin id="neutron" geometry="primitive: sphere; radius: 0.3" material="color: #00DDFF; metalness: 0.6; roughness: 0.2"></a-mixin>
 
-        <!-- Neut">
-        
-        <!-- Protons (Red Metallic) -->
-        <a-mixin id="proton" geometryrons (Cyan Blue) -->
-        <a-sphere position="-0.15 0.15 ="primitive: sphere; radius: 0.3" material="color: #D00000; metal0" radius="0.22" color="#00DDFF" metalness="0.6" roughness="0ness: 0.6; roughness: 0.3"></a-mixin>
-        <!-- Neutrons (.2"></a-sphere>
-        <a-sphere position="0.15 -0.15Silver Metallic) -->
-        <a-mixin id="neutron" geometry="primitive: sphere; radius: 0 0.1" radius="0.22" color="#00DDFF" metalness="0..3" material="color: #AAAAAA; metalness: 0.7; roughness: 0.26" roughness="0.2"></a-sphere>
-        <a-sphere position="0 -0."></a-mixin>
-
-        <!-- Cluster -->
-        <a-entity mixin="proton" position="0.22 0.2" radius="0.22" color="#00DDFF" metalness="0 0.2 0"></a-entity>
-        <a-entity mixin="neutron" position="-.6" roughness="0.2"></a-sphere>
-        <a-sphere position="-0.20.2 -0.2 0"></a-entity>
-        <a-entity mixin="proton -0.1 -0.2" radius="0.22" color="#00DDFF" metalness" position="0.2 -0.2 0.25"></a-entity>
-        <a-entity mix="0.6" roughness="0.2"></a-sphere>
-        <a-sphere position="0in="neutron" position="-0.2 0.2 0.1"></a-entity>
-        <a.2 0.1 -0.1" radius="0.22" color="#00DDFF-entity mixin="proton" position="0 0 -0.3"></a-entity>
-        <" metalness="0.6" roughness="0.2"></a-sphere>
-        <a-spherea-entity mixin="neutron" position="0.1 0.1 -0.1"></a- position="0 0 0.25" radius="0.22" color="#00DDFF" metalentity>
-        <a-entity mixin="proton" position="-0.3 0 0.1ness="0.6" roughness="0.2"></a-sphere>
-      </a-entity>
-
-
-"></a-entity>
-        <a-entity mixin="neutron" position="0.3 -0.1       <!-- ============================================ -->
-      <!-- 2. INNER SHELL (K-Shell)                     -->
-      <!--0"></a-entity>
-        <a-entity mixin="proton" position="0 -0.3    2 Electrons                               -->
-      <!-- ============================================ -->
-      <a-entity rotation="0 0 -0.1"></a-entity>
+        <!-- The Cluster -->
+        <a-entity mixin="proton" position="0.2 0.2 0"></a-entity>
+        <a-entity mixin="neutron" position="-0.2 -0.2 0"></a-entity>
+        <a-entity mixin="proton" position="0.2 -0.2 0.25"></a-entity>
+        <a-entity mixin="neutron" position="-0.2 0.2 0.1"></a-entity>
+        <a-entity mixin="proton" position="0 0 -0.3"></a-entity>
+        <a-entity mixin="neutron" position="0.1 0.1 -0.1"></a-entity>
+        <a-entity mixin="proton" position="-0.3 0 0.1"></a-entity>
+        <a-entity mixin="neutron" position="0.3 -0.1 0"></a-entity>
+        <a-entity mixin="proton" position="0 -0.3 -0.1"></a-entity>
         <a-entity mixin="neutron" position="0 0.3 0.1"></a-entity>
-        <a-entity mixin="proton" position="- 20" orbit-animation="speed: 4">
-         <!-- Ring -->
-         <a-torus color="#0.1 0.2 -0.2"></a-entity>
-        <a-entity mixinFFFFFF" radius="1.2" radius-tubular="0.005" rotation="90 ="neutron" position="0.1 -0.2 0.2"></a-entity>
-      </0 0" opacity="0.3"></a-torus>
-         <!-- Electron 1 -->
-         a-entity>
+        <a-entity mixin="proton" position="-0.1 0.2 -0.2"></a-entity>
+        <a-entity mixin="neutron" position="0.1 -0.2 0.2"></a-entity>
+      </a-entity>
 
-      <!-- 2. INNER SHELL (K-Shell) -->
-      <!-- 2<a-entity rotation="0 0 0">
-           <a-sphere position="1.2 0 Electrons -->
+      <!-- 2. INNER SHELL (K-Shell) - 2 Electrons -->
       <a-entity>
-         <!-- Shell Ring (Visual only) -->
-         <a-tor 0" radius="0.1" color="#FFFF00" material="emissive: #FFFF00us radius="1.8" radius-tubular="0.01" rotation="90 0 0"; emissiveIntensity: 2"></a-sphere>
-         </a-entity>
-         <!-- Electron 2 (Opposite) -->
-         <a-entity rotation="0 180 0">
-           <a color="#444" opacity="0.4"></a-torus>
-         <a-text value="K--sphere position="1.2 0 0" radius="0.1" color="#FFFF00"Shell (2)" position="1.9 0 0" color="#00FFFF" width="4" align material="emissive: #FFFF00; emissiveIntensity: 2"></a-sphere>
-         </="left"></a-text>
+         <!-- The Ring -->
+         <a-torus radius="1.8" radius-tubular="0.02" rotation="90 0 0" color="#555" opacity="0.5"></a-torus>
+         <!-- Label -->
+         <a-text value="K-Shell (2)" position="2 0 0" color="#00DDFF" width="5" look-at="[camera]"></a-text>
          
-         <!-- Orbit Group -->
-         <a-entity orbit-animation="speeda-entity>
-      </a-entity>
-
-
-      <!-- ============================================ -->
-      <!-- 3: 2; axis: 0 1 0">
+         <!-- Rotating Electrons -->
+         <a-entity rotation="0 0 20" orbit-animation="speed: 4">
             <!-- Electron 1 -->
-            <a-sphere position. OUTER SHELL (Valence - L-Shell)           -->
-      <!--    4 Electrons (Carbon has 4 valence="1.8 0 0" radius="0.12" color="#00FFFF" material=" e-)     -->
-      <!-- ============================================ -->
-      
-      <!-- Orbit Path 1 (Holds 2 Valenceemissive: #00FFFF; emissiveIntensity: 0.8"></a-sphere>
-            <!-- Electron  Electrons) -->
-      <a-entity rotation="30 40 0" orbit-animation="speed2 (Opposite) -->
-            <a-sphere position="-1.8 0 0" radius="0.: 2.5">
-         <a-torus color="#FFFFFF" radius="2.2" radius-tub12" color="#00FFFF" material="emissive: #00FFFF; emissiveIntensity: ular="0.008" rotation="90 0 0" opacity="0.4"></a0.8"></a-sphere>
-         </a-entity>
-      </a-entity>
-
-      -torus>
-         <a-entity>
-           <a-sphere position="2.2 0 0"<!-- 3. OUTER SHELL (L-Shell / Valence) -->
-      <!-- 4 Electrons (Tetra radius="0.12" color="#00FF00" material="emissive: #00FFhedral positions approx) -->
-      <a-entity>
-         <!-- Shell Ring (Visual only) -->
-         00; emissiveIntensity: 2"></a-sphere>
-         </a-entity>
-         <<a-torus radius="3.0" radius-tubular="0.01" rotation="90 a-entity rotation="0 180 0">
-           <a-sphere position="2.20 0" color="#444" opacity="0.4"></a-torus>
-         < 0 0" radius="0.12" color="#00FF00" material="emissivea-text value="L-Shell (4)" position="3.1 0 0" color="#FF: #00FF00; emissiveIntensity: 2"></a-sphere>
-         </a-D700" width="4" align="left"></a-text>
-
-         <!-- Orbit Group -->
-         <aentity>
-      </a-entity>
-
-      <!-- Orbit Path 2 (Holds the other 2 Valence Electrons) -->
--entity orbit-animation="speed: 1.2; axis: 0 1 0">
-                  <a-entity rotation="-30 -40 0" orbit-animation="speed: 3">
-         <!-- Electron 1 -->
-            <a-sphere position="3.0 0 0" radius="0<a-torus color="#FFFFFF" radius="2.2" radius-tubular="0.00.15" color="#FFD700" material="emissive: #FFD700;8" rotation="90 0 0" opacity="0.4"></a-torus>
-          emissiveIntensity: 0.8"></a-sphere>
+            <a-sphere position="1.8 0 0" radius="0.15" color="#00DDFF" material="emissive: #00DDFF; emissiveIntensity: 1"></a-sphere>
             <!-- Electron 2 -->
-            <a<a-entity>
-           <a-sphere position="2.2 0 0" radius="0-sphere position="-3.0 0 0" radius="0.15" color="#FFD7.12" color="#00FF00" material="emissive: #00FF00;00" material="emissive: #FFD700; emissiveIntensity: 0.8"></ emissiveIntensity: 2"></a-sphere>
+            <a-sphere position="-1.8 0 0" radius="0.15" color="#00DDFF" material="emissive: #00DDFF; emissiveIntensity: 1"></a-sphere>
          </a-entity>
-         <a-entitya-sphere>
-            <!-- Electron 3 -->
-            <a-sphere position="0 0 3 rotation="0 180 0">
-           <a-sphere position="2.2 0 .0" radius="0.15" color="#FFD700" material="emissive: #0" radius="0.12" color="#00FF00" material="emissive: #0FFD700; emissiveIntensity: 0.8"></a-sphere>
-            <!-- Electron 0FF00; emissiveIntensity: 2"></a-sphere>
-         </a-entity>
-4 -->
-            <a-sphere position="0 0 -3.0" radius="0.15      </a-entity>
-
-
-      <!-- ============================================ -->
-      <!-- 4. EDUCATIONAL LABELS" color="#FFD700" material="emissive: #FFD700; emissiveIntensity: 0.8"></a-sphere>
-         </a-entity>
-      </a-entity> (Floating Text)        -->
-      <!-- ============================================ -->
-      
-      <!-- Title -->
-      <a-text value="CARBON (C)" position="0 3.5 0" color="#FFF" align="center
-
-      <!-- 4. ORBITAL PATHS (The "Atomic" Look) -->
-      <!-- Extra decorative orbits to make it look professional/science-y -->
-      <a-entity rotation="45 0 0" orbit-" width="8" look-at="[camera]"></a-text>
-      <a-text value="animation="speed: 0.5; axis: 1 0 0">
-        <a-torAtomic Number: 6" position="0 3.0 0" color="#AAA" align="center" width="4" look-at="[camera]"></a-text>
-
-      <!-- Legend -->
-      <a-entityus radius="2.9" radius-tubular="0.005" rotation="90 0 0" position="0 -3.5 0" look-at="[camera]">
-        <a-sphere position="- color="#FFD700" opacity="0.15"></a-torus>
-      </a-entity>2 0.5 0" radius="0.15" color="#FF0055"></a-sphere
-      <a-entity rotation="-45 0 0" orbit-animation="speed: 0.7; axis: 0 0 1">
-        <a-torus radius="2.9" radius-tubular="0.005" rotation="90 0 0" color="#FFD>
-        <a-text value="Protons (6)" position="-1.7 0.5 0" width="4"></a-text>
-
-        <a-sphere position="-2 0 0" radius="0.700" opacity="0.15"></a-torus>
       </a-entity>
 
-15" color="#00DDFF"></a-sphere>
-        <a-text value="Neutrons    </a-entity>
+      <!-- 3. OUTER SHELL (L-Shell / Valence) - 4 Electrons -->
+      <a-entity>
+         <!-- The Ring -->
+         <a-torus radius="3.0" radius-tubular="0.02" rotation="90 0 0" color="#555" opacity="0.5"></a-torus>
+         <!-- Label -->
+         <a-text value="Valence Shell (4)" position="3.2 0 0" color="#FFD700" width="5" look-at="[camera]"></a-text>
+
+         <!-- Rotating Electrons -->
+         <a-entity rotation="30 40 0" orbit-animation="speed: 2.5">
+            <!-- Electron 3 -->
+            <a-sphere position="3.0 0 0" radius="0.18" color="#FFD700" material="emissive: #FFD700; emissiveIntensity: 1"></a-sphere>
+            <!-- Electron 4 -->
+            <a-sphere position="-3.0 0 0" radius="0.18" color="#FFD700" material="emissive: #FFD700; emissiveIntensity: 1"></a-sphere>
+         </a-entity>
+
+         <a-entity rotation="-30 -40 0" orbit-animation="speed: 3">
+            <!-- Electron 5 -->
+            <a-sphere position="0 0 3.0" radius="0.18" color="#FFD700" material="emissive: #FFD700; emissiveIntensity: 1"></a-sphere>
+            <!-- Electron 6 -->
+            <a-sphere position="0 0 -3.0" radius="0.18" color="#FFD700" material="emissive: #FFD700; emissiveIntensity: 1"></a-sphere>
+         </a-entity>
+      </a-entity>
+
+      <!-- LEGEND (Key at bottom) -->
+      <a-entity position="0 -4 0" look-at="[camera]">
+         <a-sphere position="-2 0 0" radius="0.2" color="#FF0055"></a-sphere>
+         <a-text value="Proton" position="-1.6 0 0" width="4"></a-text>
+
+         <a-sphere position="-0.5 0 0" radius="0.2" color="#00DDFF"></a-sphere>
+         <a-text value="Neutron" position="-0.1 0 0" width="4"></a-text>
+
+         <a-sphere position="1.2 0 0" radius="0.2" color="#FFD700"></a-sphere>
+         <a-text value="Valence e-" position="1.6 0 0" width="4"></a-text>
+      </a-entity>
+
+    </a-entity>
   </a-scene>
 </body>
 </html>
