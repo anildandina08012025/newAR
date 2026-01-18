@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Carbon AR - Clean Movie Mode</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+  <script src="https://unpkg.com/aframe-look-at-component@0.8.0/dist/aframe-look-at-component.min.js"></script>
+
+  <style>
+    /* MOVIE STYLE UI */
+    body { margin: 0; background-color: #000; overflow: hidden; }
+
+    #overlay {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    /* TOP HUD */
+    .hud-top {
+      padding: 20px;
+      text-align: center;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+    }
+    .hud-title {
+      color: #00DDFF;
+      font-family: 'Courier New', monospace;
+      font-weight: bold;
+      font-size: 24px;
+      text-shadow: 0 0 10px #00DDFF;
+      letter-spacing: 2px;
+      margin: 0;
+    }
+
+    /* BOTTOM CONTROLS */
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      padding-bottom: 30px;
+      background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+      pointer-events: auto;
+    }
+
+    .btn {
+      background: rgba(0, 20, 30, 0.8);
+      border: 1px solid #00DDFF;
+      color: #00DDFF;
+      padding: 15px;
+      border-radius: 50%; /* Circular buttons */
+      width: 60px;
+      height: 60px;
+      font-size: 20px;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(0, 221, 255, 0.3);
+      transition: transform 0.1s;
+    }
+    
+    .btn:active { transform: scale(0.9); background: #00DDFF; color: black; }
+    
+    .btn-label {
+      font-size: 10px;
+      display: block;
+      margin-top: 5px;
+      font-family: sans-serif;
+      color: white;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- AUDIO -->
+  <audio id="narrator" src="audio.mp3"></audio>
+
+  <!-- UI LAYOUT -->
+  <div id="overlay">
+    <div class="hud-top">
+      <div class="hud-title">CARBON (C)</div>
+      <div style="color:#aaa; font-size: 10px;">Swipe to Rotate • Pinch to Zoom</div>
+    </div>
+
+    <div class="controls">
+      <div style="text-align:center">
+        <button class="btn" onclick="toggleExpand()">💥</button>
+        <span class="btn-label">EXPLODE</span>
+      </div>
+      <div style="text-align:center">
+        <button class="btn" onclick="toggleAnimation()">⏸</button>
+        <span class="btn-label">FREEZE</span>
+      </div>
+      <div style="text-align:center">
+        <button class="btn" id="audioBtn" onclick="toggleAudio()">🔊</button>
+        <span class="btn-label">AUDIO</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- 1. PHYSICS MOMENTUM SCRIPT ---
+    AFRAME.registerComponent('momentum-rotation', {
+      init: function () {
+        this.el.sceneEl.addEventListener('touchstart', this.onTouchStart.bind(this));
+        this.el.sceneEl.addEventListener('touchmove', this.onTouchMove.bind(this));
+        this.el.sceneEl.addEventListener('touchend', this.onTouchEnd.bind(this));
+        
+        this.isDragging = false;
+        this.previousMouse = {x: 0, y: 0};
+        this.velocity = {x: 0, y: 0}; 
+        this.friction = 0.95; 
+      },
+
+      onTouchStart: function(e) {
+        this.isDragging = true;
+        this.previousMouse.x = e.touches[0].clientX;
+        this.previousMouse.y = e.touches[0].clientY;
+        this.velocity = {x: 0, y: 0};
+      },
+
+      onTouchMove: function(e) {
+        if (!this.isDragging) return;
+        var dx = e.touches[0].clientX - this.previousMouse.x;
+        var dy = e.touches[0].clientY - this.previousMouse.y;
+
+        this.el.object3D.rotation.y += dx * 0.005;
+        this.el.object3D.rotation.x += dy * 0.005;
+
+        this.velocity.x = dx * 0.005;
+        this.velocity.y = dy * 0.005;
+
+        this.previousMouse.x = e.touches[0].clientX;
+        this.previousMouse.y = e.touches[0].clientY;
+      },
+
+      onTouchEnd: function() {
+        this.isDragging = false;
+      },
+
+      tick: function() {
+        if (!this.isDragging) {
+          this.el.object3D.rotation.y += this.velocity.x;
+          this.el.object3D.rotation.x += this.velocity.y;
+          this.velocity.x *= this.friction;
+          this.velocity.y *= this.friction;
+        }
+      }
+    });
+
+    // --- 2. ORBIT ANIMATION ---
+    AFRAME.registerComponent('orbit-animation', {
+      schema: { speed: {type: 'number', default: 1} },
+      tick: function (time, timeDelta) {
+        if (!this.el.getAttribute('is-paused')) {
+           var rotation = this.el.getAttribute('rotation');
+           this.el.setAttribute('rotation', {
+             x: rotation.x,
+             y: rotation.y + (this.data.speed * (timeDelta / 10)),
+             z: rotation.z
+           });
+        }
+      }
+    });
+
+    // --- 3. UI FUNCTIONS ---
+    let isExpanded = false;
+    function toggleExpand() {
+      const kShell = document.querySelector('#k-shell');
+      const lShell = document.querySelector('#l-shell');
+      
+      if (!isExpanded) {
+        kShell.setAttribute('animation', 'property: scale; to: 1.8 1.8 1.8; dur: 800; easing: easeOutBack');
+        lShell.setAttribute('animation', 'property: scale; to: 1.8 1.8 1.8; dur: 800; easing: easeOutBack');
+      } else {
+        kShell.setAttribute('animation', 'property: scale; to: 1 1 1; dur: 800; easing: easeOutBack');
+        lShell.setAttribute('animation', 'property: scale; to: 1 1 1; dur: 800; easing: easeOutBack');
+      }
+      isExpanded = !isExpanded;
+    }
+
+    let isPaused = false;
+    function toggleAnimation() {
+      const orbits = document.querySelectorAll('[orbit-animation]');
+      isPaused = !isPaused;
+      orbits.forEach(el => {
+        isPaused ? el.setAttribute('is-paused', 'true') : el.removeAttribute('is-paused');
+      });
+    }
+
+    function toggleAudio() {
+      var sound = document.getElementById("narrator");
+      var btn = document.getElementById("audioBtn");
+      if (sound.paused) {
+        sound.play();
+        btn.innerHTML = "⬛";
+        btn.style.borderColor = "#FF0055";
+        btn.style.color = "#FF0055";
+      } else {
+        sound.pause();
+        sound.currentTime = 0;
+        btn.innerHTML = "🔊";
+        btn.style.borderColor = "#00DDFF";
+        btn.style.color = "#00DDFF";
+      }
+    }
+  </script>
+
+  <!-- AR SCENE -->
+  <a-scene 
+    vr-mode-ui="enabled: true"
+    webxr="optionalFeatures: dom-overlay; overlayElement: #overlay"
+    renderer="antialias: true; colorManagement: true; alpha: true"
+    background="color: transparent">
+
+    <!-- HOLLYWOOD LIGHTING -->
+    <a-light type="directional" intensity="3" position="-2 4 4" color="#aaccff"></a-light>
+    <a-light type="point" intensity="2" position="0 0 0" color="#00DDFF" distance="5"></a-light>
+    <a-light type="ambient" intensity="0.2"></a-light>
+
+    <!-- CONTAINER FOR ROTATION (Controlled by Momentum Script) -->
+    <!-- Positioned further back (-4) for better scale -->
+    <a-entity id="rotatable-container" position="0 1.5 -4" scale="0.4 0.4 0.4" momentum-rotation>
+
+      <!-- ATOM GROUP (No Wireframe!) -->
+      <a-entity id="carbon-model">
+
+        <!-- TITLE FLOATING -->
+        <a-text value="C-06" position="0 4.5 0" align="center" width="15" color="#00DDFF" font="sourcecodepro" look-at="[camera]"></a-text>
+
+        <!-- NUCLEUS -->
+        <a-entity animation="property: rotation; to: 360 360 0; loop: true; dur: 20000; easing: linear">
+          <a-mixin id="proton" geometry="primitive: sphere; radius: 0.3" material="color: #FF0055; metalness: 0.9; roughness: 0.1; emissive: #FF0055; emissiveIntensity: 0.2"></a-mixin>
+          <a-mixin id="neutron" geometry="primitive: sphere; radius: 0.3" material="color: #00DDFF; metalness: 0.9; roughness: 0.1; emissive: #00DDFF; emissiveIntensity: 0.2"></a-mixin>
+          
+          <a-entity mixin="proton" position="0.2 0.2 0"></a-entity>
+          <a-entity mixin="neutron" position="-0.2 -0.2 0"></a-entity>
+          <a-entity mixin="proton" position="0.2 -0.2 0.25"></a-entity>
+          <a-entity mixin="neutron" position="-0.2 0.2 0.1"></a-entity>
+          <a-entity mixin="proton" position="0 0 -0.3"></a-entity>
+          <a-entity mixin="neutron" position="0.1 0.1 -0.1"></a-entity>
+          <a-entity mixin="proton" position="-0.3 0 0.1"></a-entity>
+          <a-entity mixin="neutron" position="0.3 -0.1 0"></a-entity>
+          <a-entity mixin="neutron" position="0 0.3 0.1"></a-entity>
+          <a-entity mixin="proton" position="-0.1 0.2 -0.2"></a-entity>
+          <a-entity mixin="proton" position="0.1 -0.3 0.2"></a-entity>
+          <a-entity mixin="neutron" position="0.1 -0.2 0.2"></a-entity>
+        </a-entity>
+
+        <!-- K-SHELL (Glowing Rings) -->
+        <a-entity id="k-shell">
+           <a-torus radius="1.8" radius-tubular="0.01" rotation="90 0 0" color="#00DDFF" opacity="0.3" material="emissive: #00DDFF; emissiveIntensity: 0.5"></a-torus>
+           <a-entity rotation="0 0 20" orbit-animation="speed: 4">
+              <a-sphere position="1.8 0 0" radius="0.15" color="white" material="emissive: #00DDFF; emissiveIntensity: 2"></a-sphere>
+              <a-sphere position="-1.8 0 0" radius="0.15" color="white" material="emissive: #00DDFF; emissiveIntensity: 2"></a-sphere>
+           </a-entity>
+        </a-entity>
+
+        <!-- L-SHELL (Valence) -->
+        <a-entity id="l-shell">
+           <a-torus radius="3.0" radius-tubular="0.01" rotation="90 0 0" color="#FFD700" opacity="0.3" material="emissive: #FFD700; emissiveIntensity: 0.5"></a-torus>
+           <a-entity rotation="30 40 0" orbit-animation="speed: 2.5">
+              <a-sphere position="3.0 0 0" radius="0.18" color="white" material="emissive: #FFD700; emissiveIntensity: 2"></a-sphere>
+              <a-sphere position="-3.0 0 0" radius="0.18" color="white" material="emissive: #FFD700; emissiveIntensity: 2"></a-sphere>
+           </a-entity>
+           <a-entity rotation="-30 -40 0" orbit-animation="speed: 3">
+              <a-sphere position="0 0 3.0" radius="0.18" color="white" material="emissive: #FFD700; emissiveIntensity: 2"></a-sphere>
+              <a-sphere position="0 0 -3.0" radius="0.18" color="white" material="emissive: #FFD700; emissiveIntensity: 2"></a-sphere>
+           </a-entity>
+        </a-entity>
+
+      </a-entity>
+    </a-entity>
+  </a-scene>
+</body>
+</html>
