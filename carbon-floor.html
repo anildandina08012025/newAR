@@ -2,98 +2,101 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Carbon AR - Floor Anchor</title>
+  <title>Carbon AR - Studio Edition</title>
   <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
   <script src="https://unpkg.com/aframe-look-at-component@0.8.0/dist/aframe-look-at-component.min.js"></script>
-  <!-- AR Hit Test (The technology to find the floor) -->
-  <script src="https://unpkg.com/aframe-hit-test-controls@2.0.0/dist/aframe-hit-test-controls.min.js"></script>
 
   <style>
-    /* UI BUTTONS */
+    /* UI OVERLAY */
+    body { margin: 0; overflow: hidden; }
+    
     .ui-container {
       position: absolute;
       bottom: 20px;
       left: 0;
       width: 100%;
       text-align: center;
-      z-index: 10;
+      z-index: 100;
       pointer-events: none;
-      display: none; /* Hidden until atom is placed */
     }
 
     .btn {
-      background: rgba(0, 0, 0, 0.7);
+      background: rgba(20, 20, 20, 0.8);
       border: 1px solid #00DDFF;
-      color: white;
-      padding: 10px 15px;
+      color: #00DDFF;
+      padding: 12px 18px;
       margin: 0 5px;
-      border-radius: 20px;
+      border-radius: 8px;
+      font-family: sans-serif;
       font-weight: bold;
-      pointer-events: auto;
+      font-size: 14px;
+      pointer-events: auto; /* Buttons are clickable */
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
+    
+    .btn:active { background: #00DDFF; color: black; }
 
-    /* INSTRUCTIONS OVERLAY */
-    #instructions {
+    /* Instructions at top */
+    .top-text {
       position: absolute;
-      top: 50%;
-      left: 0;
+      top: 20px;
       width: 100%;
       text-align: center;
       color: white;
-      font-size: 20px;
       font-family: sans-serif;
-      text-shadow: 2px 2px 4px black;
+      text-shadow: 1px 1px 2px black;
       pointer-events: none;
-      transform: translateY(-50%);
+      z-index: 100;
     }
   </style>
 </head>
 
 <body>
 
-  <!-- Instructions (Visible at start) -->
-  <div id="instructions">
-    Scan Floor &<br>Tap Ring to Place Atom
+  <div class="top-text">
+    <h2>CARBON (C)</h2>
+    <p>Swipe to Rotate • Pinch to Zoom</p>
   </div>
 
-  <!-- Control Buttons (Visible after placement) -->
-  <div class="ui-container" id="controls">
-    <button class="btn" onclick="toggleExpand()">Explode View</button>
+  <div class="ui-container">
+    <button class="btn" onclick="toggleExpand()">Explode</button>
     <button class="btn" onclick="toggleAnimation()">Pause</button>
     <button class="btn" onclick="toggleLabels()">Labels</button>
   </div>
 
   <script>
-    // 1. AR PLACEMENT CONTROLLER
-    AFRAME.registerComponent('ar-controller', {
+    // 1. FULL ROTATION CONTROL (Swipe to Spin AND Tilt)
+    AFRAME.registerComponent('input-listener', {
       init: function () {
-        this.reticle = document.querySelector("#reticle");
-        this.atom = document.querySelector("#carbon-model");
-        this.ui = document.querySelector("#controls");
-        this.instructions = document.querySelector("#instructions");
-        this.isPlaced = false;
+        this.el.sceneEl.addEventListener('touchmove', (evt) => {
+           // Get the atom
+           var model = document.querySelector("#carbon-model");
+           
+           // Calculate movement
+           var touch = evt.touches[0];
+           if (this.lastX && this.lastY) {
+             var deltaX = touch.clientX - this.lastX;
+             var deltaY = touch.clientY - this.lastY;
 
-        this.el.sceneEl.addEventListener('click', (e) => {
-          // If reticle is visible and we haven't placed yet
-          if (this.reticle.getAttribute('visible') && !this.isPlaced) {
-            
-            // 1. Move Atom to Reticle Position
-            const pos = this.reticle.getAttribute('position');
-            const rot = this.reticle.getAttribute('rotation');
-            
-            this.atom.setAttribute('position', pos);
-            // We rotate it slightly to face user initially, but keep it flat
-            this.atom.setAttribute('rotation', {x: 0, y: rot.y, z: 0});
-            
-            // 2. Make Atom Visible
-            this.atom.setAttribute('visible', 'true');
-            
-            // 3. Update UI
-            this.isPlaced = true;
-            this.reticle.setAttribute('visible', 'false');
-            this.instructions.style.display = 'none';
-            this.ui.style.display = 'block';
-          }
+             // Rotate Y (Left/Right)
+             model.object3D.rotation.y += deltaX * 0.01;
+             
+             // Rotate X (Up/Down) - This lets you see the top!
+             model.object3D.rotation.x += deltaY * 0.01;
+           }
+           this.lastX = touch.clientX;
+           this.lastY = touch.clientY;
+        });
+
+        this.el.sceneEl.addEventListener('touchstart', (evt) => {
+           this.lastX = evt.touches[0].clientX;
+           this.lastY = evt.touches[0].clientY;
+        });
+        
+        this.el.sceneEl.addEventListener('touchend', () => {
+           this.lastX = null;
+           this.lastY = null;
         });
       }
     });
@@ -118,9 +121,10 @@
     function toggleExpand() {
       const kShell = document.querySelector('#k-shell');
       const lShell = document.querySelector('#l-shell');
+      
       if (!isExpanded) {
-        kShell.setAttribute('animation', 'property: scale; to: 1.5 1.5 1.5; dur: 800; easing: easeOutQuad');
-        lShell.setAttribute('animation', 'property: scale; to: 1.5 1.5 1.5; dur: 800; easing: easeOutQuad');
+        kShell.setAttribute('animation', 'property: scale; to: 1.6 1.6 1.6; dur: 800; easing: easeOutQuad');
+        lShell.setAttribute('animation', 'property: scale; to: 1.6 1.6 1.6; dur: 800; easing: easeOutQuad');
       } else {
         kShell.setAttribute('animation', 'property: scale; to: 1 1 1; dur: 800; easing: easeOutQuad');
         lShell.setAttribute('animation', 'property: scale; to: 1 1 1; dur: 800; easing: easeOutQuad');
@@ -139,7 +143,7 @@
 
     let showLabels = true;
     function toggleLabels() {
-      const labels = document.querySelectorAll('.label');
+      const labels = document.querySelectorAll('.atom-label');
       showLabels = !showLabels;
       labels.forEach(el => el.setAttribute('visible', showLabels));
     }
@@ -147,30 +151,24 @@
 
   <!-- AR SCENE -->
   <a-scene 
-    webxr="requiredFeatures: hit-test, local-floor; overlayElement: #controls" 
-    ar-controller
-    renderer="antialias: true; colorManagement: true; alpha: true">
+    vr-mode-ui="enabled: true" 
+    renderer="antialias: true; colorManagement: true; alpha: true"
+    input-listener>
 
     <!-- LIGHTING -->
-    <a-light type="directional" intensity="2" position="-2 4 4"></a-light>
-    <a-light type="ambient" intensity="0.5"></a-light>
+    <a-light type="directional" intensity="2.5" position="-2 4 4" color="#ffffff"></a-light>
+    <a-light type="directional" intensity="1" position="2 -2 2" color="#aaccff"></a-light>
+    <a-light type="ambient" intensity="0.5" color="#222"></a-light>
 
-    <!-- THE RETICLE (Target Ring) -->
-    <a-entity id="reticle" ar-hit-test="target: #carbon-model;" position="0 0 -2" visible="false">
-      <a-ring rotation="-90 0 0" radius-inner="0.1" radius-outer="0.12" color="white"></a-ring>
-    </a-entity>
-
-    <!-- THE CARBON ATOM (Hidden until placed) -->
-    <a-entity id="carbon-model" visible="false" scale="0.15 0.15 0.15">
-      
-      <!-- Title (Looks at Camera) -->
-      <a-text class="label" value="CARBON (C)" position="0 4 0" align="center" width="10" look-at="[camera]"></a-text>
+    <!-- THE ATOM (Floating Fixed Position) -->
+    <a-entity id="carbon-model" position="0 1.5 -3" scale="0.4 0.4 0.4">
 
       <!-- 1. NUCLEUS -->
       <a-entity animation="property: rotation; to: 360 360 0; loop: true; dur: 25000; easing: linear">
-        <a-mixin id="proton" geometry="primitive: sphere; radius: 0.3" material="color: #FF0055; metalness: 0.6; roughness: 0.2"></a-mixin>
-        <a-mixin id="neutron" geometry="primitive: sphere; radius: 0.3" material="color: #00DDFF; metalness: 0.6; roughness: 0.2"></a-mixin>
+        <a-mixin id="proton" geometry="primitive: sphere; radius: 0.3" material="color: #FF0055; metalness: 0.7; roughness: 0.2"></a-mixin>
+        <a-mixin id="neutron" geometry="primitive: sphere; radius: 0.3" material="color: #00DDFF; metalness: 0.7; roughness: 0.2"></a-mixin>
         
+        <!-- Cluster -->
         <a-entity mixin="proton" position="0.2 0.2 0"></a-entity>
         <a-entity mixin="neutron" position="-0.2 -0.2 0"></a-entity>
         <a-entity mixin="proton" position="0.2 -0.2 0.25"></a-entity>
@@ -179,22 +177,28 @@
         <a-entity mixin="neutron" position="0.1 0.1 -0.1"></a-entity>
         <a-entity mixin="proton" position="-0.3 0 0.1"></a-entity>
         <a-entity mixin="neutron" position="0.3 -0.1 0"></a-entity>
+        <a-entity mixin="neutron" position="0 0.3 0.1"></a-entity>
+        <a-entity mixin="proton" position="-0.1 0.2 -0.2"></a-entity>
+        <a-entity mixin="proton" position="0.1 -0.3 0.2"></a-entity>
+        <a-entity mixin="neutron" position="0.1 -0.2 0.2"></a-entity>
       </a-entity>
 
       <!-- 2. K-SHELL -->
       <a-entity id="k-shell">
-         <a-torus radius="1.8" radius-tubular="0.02" rotation="90 0 0" color="#555" opacity="0.5"></a-torus>
-         <a-text class="label" value="Inner Shell" position="2 0 0" color="#00DDFF" width="6" look-at="[camera]"></a-text>
+         <a-torus radius="1.8" radius-tubular="0.01" rotation="90 0 0" color="#888" opacity="0.4"></a-torus>
+         <a-text class="atom-label" value="Inner Shell" position="2 0 0" color="#00DDFF" width="6" look-at="[camera]"></a-text>
+         
          <a-entity rotation="0 0 20" orbit-animation="speed: 4">
-            <a-sphere position="1.8 0 0" radius="0.15" color="#00DDFF" material="emissive: #00DDFF"></a-sphere>
-            <a-sphere position="-1.8 0 0" radius="0.15" color="#00DDFF" material="emissive: #00DDFF"></a-sphere>
+            <a-sphere position="1.8 0 0" radius="0.15" color="#00DDFF" material="emissive: #00DDFF; emissiveIntensity: 0.8"></a-sphere>
+            <a-sphere position="-1.8 0 0" radius="0.15" color="#00DDFF" material="emissive: #00DDFF; emissiveIntensity: 0.8"></a-sphere>
          </a-entity>
       </a-entity>
 
-      <!-- 3. L-SHELL -->
+      <!-- 3. L-SHELL (Valence) -->
       <a-entity id="l-shell">
-         <a-torus radius="3.0" radius-tubular="0.02" rotation="90 0 0" color="#555" opacity="0.5"></a-torus>
-         <a-text class="label" value="Valence Shell" position="3.2 0 0" color="#FFD700" width="6" look-at="[camera]"></a-text>
+         <a-torus radius="3.0" radius-tubular="0.01" rotation="90 0 0" color="#888" opacity="0.4"></a-torus>
+         <a-text class="atom-label" value="Valence Shell" position="3.2 0 0" color="#FFD700" width="6" look-at="[camera]"></a-text>
+
          <a-entity rotation="30 40 0" orbit-animation="speed: 2.5">
             <a-sphere position="3.0 0 0" radius="0.18" color="#FFD700" material="emissive: #FFD700"></a-sphere>
             <a-sphere position="-3.0 0 0" radius="0.18" color="#FFD700" material="emissive: #FFD700"></a-sphere>
@@ -204,9 +208,6 @@
             <a-sphere position="0 0 -3.0" radius="0.18" color="#FFD700" material="emissive: #FFD700"></a-sphere>
          </a-entity>
       </a-entity>
-
-      <!-- Ground Shadow (Helps depth perception) -->
-      <a-circle rotation="-90 0 0" radius="4" color="black" opacity="0.3" position="0 -1 0"></a-circle>
 
     </a-entity>
   </a-scene>
