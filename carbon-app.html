@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Interactive Carbon AR App</title>
+  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+  <script src="https://unpkg.com/aframe-look-at-component@0.8.0/dist/aframe-look-at-component.min.js"></script>
+
+  <style>
+    /* CSS FOR THE UI BUTTONS */
+    .ui-container {
+      position: absolute;
+      bottom: 20px;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      z-index: 10; /* Sits on top of 3D */
+      pointer-events: none; /* Let touches pass through empty space */
+    }
+
+    .btn {
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid white;
+      color: white;
+      padding: 12px 20px;
+      margin: 0 5px;
+      border-radius: 30px;
+      font-family: sans-serif;
+      font-weight: bold;
+      font-size: 14px;
+      cursor: pointer;
+      pointer-events: auto; /* Make buttons clickable */
+      backdrop-filter: blur(5px);
+      transition: background 0.3s;
+    }
+
+    .btn:active {
+      background: rgba(0, 255, 255, 0.5);
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- THE UI OVERLAY -->
+  <div class="ui-container">
+    <button class="btn" onclick="toggleExpand()">⚡ Expand/Collapse</button>
+    <button class="btn" onclick="toggleAnimation()">⏸ Pause</button>
+    <button class="btn" onclick="toggleLabels()">abc Labels</button>
+  </div>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    // 1. ROTATION COMPONENT (Swipe to rotate)
+    AFRAME.registerComponent('scene-rotation-handler', {
+      init: function () {
+        this.atom = document.querySelector('#carbon-model');
+        this.isDragging = false;
+        this.startMouseX = 0;
+        this.currentRotationY = 0;
+
+        document.addEventListener('touchstart', (evt) => {
+          this.isDragging = true;
+          this.startMouseX = evt.touches[0].clientX;
+          this.currentRotationY = this.atom.object3D.rotation.y;
+        });
+
+        document.addEventListener('touchmove', (evt) => {
+          if (!this.isDragging) return;
+          var distance = evt.touches[0].clientX - this.startMouseX;
+          this.atom.object3D.rotation.y = this.currentRotationY + (distance / 150);
+        });
+
+        document.addEventListener('touchend', () => { this.isDragging = false; });
+      }
+    });
+
+    // 2. ORBIT ANIMATION
+    AFRAME.registerComponent('orbit-animation', {
+      schema: { speed: {type: 'number', default: 1} },
+      init: function() { this.originalSpeed = this.data.speed; },
+      tick: function (time, timeDelta) {
+        if (!this.el.getAttribute('is-paused')) {
+           var rotation = this.el.getAttribute('rotation');
+           this.el.setAttribute('rotation', {
+             x: rotation.x,
+             y: rotation.y + (this.data.speed * (timeDelta / 10)),
+             z: rotation.z
+           });
+        }
+      }
+    });
+
+    // --- BUTTON FUNCTIONS ---
+
+    // Feature 1: Expand shells to see nucleus
+    let isExpanded = false;
+    function toggleExpand() {
+      const kShell = document.querySelector('#k-shell');
+      const lShell = document.querySelector('#l-shell');
+      
+      if (!isExpanded) {
+        // Expand
+        kShell.setAttribute('animation', 'property: scale; to: 1.5 1.5 1.5; dur: 1000; easing: easeOutElastic');
+        lShell.setAttribute('animation', 'property: scale; to: 1.5 1.5 1.5; dur: 1000; easing: easeOutElastic');
+      } else {
+        // Collapse back
+        kShell.setAttribute('animation', 'property: scale; to: 1 1 1; dur: 1000; easing: easeOutElastic');
+        lShell.setAttribute('animation', 'property: scale; to: 1 1 1; dur: 1000; easing: easeOutElastic');
+      }
+      isExpanded = !isExpanded;
+    }
+
+    // Feature 2: Pause/Play
+    let isPaused = false;
+    function toggleAnimation() {
+      const orbits = document.querySelectorAll('[orbit-animation]');
+      isPaused = !isPaused;
+      
+      orbits.forEach(el => {
+        if (isPaused) {
+          el.setAttribute('is-paused', 'true');
+        } else {
+          el.removeAttribute('is-paused');
+        }
+      });
+    }
+
+    // Feature 3: Show/Hide Labels
+    let showLabels = true;
+    function toggleLabels() {
+      const labels = document.querySelectorAll('a-text');
+      showLabels = !showLabels;
+      
+      labels.forEach(el => {
+        el.setAttribute('visible', showLabels);
+      });
+    }
+  </script>
+
+  <!-- THE 3D SCENE -->
+  <a-scene 
+    vr-mode-ui="enabled: false" 
+    renderer="antialias: true; colorManagement: true; alpha: true"
+    scene-rotation-handler>
+
+    <!-- LIGHTING -->
+    <a-light type="directional" intensity="2" position="-2 4 4" color="#ffffff"></a-light>
+    <a-light type="ambient" intensity="0.6" color="#333"></a-light>
+
+    <!-- ATOM CONTAINER -->
+    <a-entity id="carbon-model" position="0 1.5 -3" scale="0.4 0.4 0.4">
+      
+      <!-- TITLE -->
+      <a-text value="CARBON (C)" position="0 4.5 0" align="center" width="8" look-at="[camera]"></a-text>
+
+      <!-- 1. NUCLEUS -->
+      <a-entity animation="property: rotation; to: 360 360 0; loop: true; dur: 25000; easing: linear">
+        <a-mixin id="proton" geometry="primitive: sphere; radius: 0.3" material="color: #FF0055; metalness: 0.6; roughness: 0.2"></a-mixin>
+        <a-mixin id="neutron" geometry="primitive: sphere; radius: 0.3" material="color: #00DDFF; metalness: 0.6; roughness: 0.2"></a-mixin>
+
+        <!-- Cluster -->
+        <a-entity mixin="proton" position="0.2 0.2 0"></a-entity>
+        <a-entity mixin="neutron" position="-0.2 -0.2 0"></a-entity>
+        <a-entity mixin="proton" position="0.2 -0.2 0.25"></a-entity>
+        <a-entity mixin="neutron" position="-0.2 0.2 0.1"></a-entity>
+        <a-entity mixin="proton" position="0 0 -0.3"></a-entity>
+        <a-entity mixin="neutron" position="0.1 0.1 -0.1"></a-entity>
+        <a-entity mixin="proton" position="-0.3 0 0.1"></a-entity>
+        <a-entity mixin="neutron" position="0.3 -0.1 0"></a-entity>
+        <a-entity mixin="proton" position="0 -0.3 -0.1"></a-entity>
+        <a-entity mixin="neutron" position="0 0.3 0.1"></a-entity>
+        <a-entity mixin="proton" position="-0.1 0.2 -0.2"></a-entity>
+        <a-entity mixin="neutron" position="0.1 -0.2 0.2"></a-entity>
+      </a-entity>
+
+      <!-- 2. INNER SHELL (K-Shell) -->
+      <a-entity id="k-shell"> <!-- ID added for animation -->
+         <a-torus radius="1.8" radius-tubular="0.02" rotation="90 0 0" color="#777" opacity="0.5"></a-torus>
+         <a-text value="K-Shell" position="2 0 0" color="#00DDFF" width="5" look-at="[camera]"></a-text>
+         
+         <a-entity rotation="0 0 20" orbit-animation="speed: 4">
+            <a-sphere position="1.8 0 0" radius="0.15" color="#00DDFF" material="emissive: #00DDFF; emissiveIntensity: 1"></a-sphere>
+            <a-sphere position="-1.8 0 0" radius="0.15" color="#00DDFF" material="emissive: #00DDFF; emissiveIntensity: 1"></a-sphere>
+         </a-entity>
+      </a-entity>
+
+      <!-- 3. OUTER SHELL (L-Shell) -->
+      <a-entity id="l-shell"> <!-- ID added for animation -->
+         <a-torus radius="3.0" radius-tubular="0.02" rotation="90 0 0" color="#777" opacity="0.5"></a-torus>
+         <a-text value="Valence" position="3.2 0 0" color="#FFD700" width="5" look-at="[camera]"></a-text>
+
+         <a-entity rotation="30 40 0" orbit-animation="speed: 2.5">
+            <a-sphere position="3.0 0 0" radius="0.18" color="#FFD700" material="emissive: #FFD700; emissiveIntensity: 1"></a-sphere>
+            <a-sphere position="-3.0 0 0" radius="0.18" color="#FFD700" material="emissive: #FFD700; emissiveIntensity: 1"></a-sphere>
+         </a-entity>
+
+         <a-entity rotation="-30 -40 0" orbit-animation="speed: 3">
+            <a-sphere position="0 0 3.0" radius="0.18" color="#FFD700" material="emissive: #FFD700; emissiveIntensity: 1"></a-sphere>
+            <a-sphere position="0 0 -3.0" radius="0.18" color="#FFD700" material="emissive: #FFD700; emissiveIntensity: 1"></a-sphere>
+         </a-entity>
+      </a-entity>
+
+    </a-entity>
+  </a-scene>
+</body>
+</html>
