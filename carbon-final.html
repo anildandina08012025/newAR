@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Carbon AR - Studio Edition</title>
+  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+  <script src="https://unpkg.com/aframe-look-at-component@0.8.0/dist/aframe-look-at-component.min.js"></script>
+
+  <style>
+    /* UI OVERLAY */
+    body { margin: 0; overflow: hidden; }
+    
+    .ui-container {
+      position: absolute;
+      bottom: 20px;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      z-index: 100;
+      pointer-events: none;
+    }
+
+    .btn {
+      background: rgba(20, 20, 20, 0.8);
+      border: 1px solid #00DDFF;
+      color: #00DDFF;
+      padding: 12px 18px;
+      margin: 0 5px;
+      border-radius: 8px;
+      font-family: sans-serif;
+      font-weight: bold;
+      font-size: 14px;
+      pointer-events: auto; /* Buttons are clickable */
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .btn:active { background: #00DDFF; color: black; }
+
+    /* Instructions at top */
+    .top-text {
+      position: absolute;
+      top: 20px;
+      width: 100%;
+      text-align: center;
+      color: white;
+      font-family: sans-serif;
+      text-shadow: 1px 1px 2px black;
+      pointer-events: none;
+      z-index: 100;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="top-text">
+    <h2>CARBON (C)</h2>
+    <p>Swipe to Rotate • Pinch to Zoom</p>
+  </div>
+
+  <div class="ui-container">
+    <button class="btn" onclick="toggleExpand()">Explode</button>
+    <button class="btn" onclick="toggleAnimation()">Pause</button>
+    <button class="btn" onclick="toggleLabels()">Labels</button>
+  </div>
+
+  <script>
+    // 1. FULL ROTATION CONTROL (Swipe to Spin AND Tilt)
+    AFRAME.registerComponent('input-listener', {
+      init: function () {
+        this.el.sceneEl.addEventListener('touchmove', (evt) => {
+           // Get the atom
+           var model = document.querySelector("#carbon-model");
+           
+           // Calculate movement
+           var touch = evt.touches[0];
+           if (this.lastX && this.lastY) {
+             var deltaX = touch.clientX - this.lastX;
+             var deltaY = touch.clientY - this.lastY;
+
+             // Rotate Y (Left/Right)
+             model.object3D.rotation.y += deltaX * 0.01;
+             
+             // Rotate X (Up/Down) - This lets you see the top!
+             model.object3D.rotation.x += deltaY * 0.01;
+           }
+           this.lastX = touch.clientX;
+           this.lastY = touch.clientY;
+        });
+
+        this.el.sceneEl.addEventListener('touchstart', (evt) => {
+           this.lastX = evt.touches[0].clientX;
+           this.lastY = evt.touches[0].clientY;
+        });
+        
+        this.el.sceneEl.addEventListener('touchend', () => {
+           this.lastX = null;
+           this.lastY = null;
+        });
+      }
+    });
+
+    // 2. ANIMATION LOGIC
+    AFRAME.registerComponent('orbit-animation', {
+      schema: { speed: {type: 'number', default: 1} },
+      tick: function (time, timeDelta) {
+        if (!this.el.getAttribute('is-paused')) {
+           var rotation = this.el.getAttribute('rotation');
+           this.el.setAttribute('rotation', {
+             x: rotation.x,
+             y: rotation.y + (this.data.speed * (timeDelta / 10)),
+             z: rotation.z
+           });
+        }
+      }
+    });
+
+    // 3. BUTTON FUNCTIONS
+    let isExpanded = false;
+    function toggleExpand() {
+      const kShell = document.querySelector('#k-shell');
+      const lShell = document.querySelector('#l-shell');
+      
+      if (!isExpanded) {
+        kShell.setAttribute('animation', 'property: scale; to: 1.6 1.6 1.6; dur: 800; easing: easeOutQuad');
+        lShell.setAttribute('animation', 'property: scale; to: 1.6 1.6 1.6; dur: 800; easing: easeOutQuad');
+      } else {
+        kShell.setAttribute('animation', 'property: scale; to: 1 1 1; dur: 800; easing: easeOutQuad');
+        lShell.setAttribute('animation', 'property: scale; to: 1 1 1; dur: 800; easing: easeOutQuad');
+      }
+      isExpanded = !isExpanded;
+    }
+
+    let isPaused = false;
+    function toggleAnimation() {
+      const orbits = document.querySelectorAll('[orbit-animation]');
+      isPaused = !isPaused;
+      orbits.forEach(el => {
+        isPaused ? el.setAttribute('is-paused', 'true') : el.removeAttribute('is-paused');
+      });
+    }
+
+    let showLabels = true;
+    function toggleLabels() {
+      const labels = document.querySelectorAll('.atom-label');
+      showLabels = !showLabels;
+      labels.forEach(el => el.setAttribute('visible', showLabels));
+    }
+  </script>
+
+  <!-- AR SCENE -->
+  <a-scene 
+    vr-mode-ui="enabled: true" 
+    renderer="antialias: true; colorManagement: true; alpha: true"
+    input-listener>
+
+    <!-- LIGHTING -->
+    <a-light type="directional" intensity="2.5" position="-2 4 4" color="#ffffff"></a-light>
+    <a-light type="directional" intensity="1" position="2 -2 2" color="#aaccff"></a-light>
+    <a-light type="ambient" intensity="0.5" color="#222"></a-light>
+
+    <!-- THE ATOM (Floating Fixed Position) -->
+    <a-entity id="carbon-model" position="0 1.5 -3" scale="0.4 0.4 0.4">
+
+      <!-- 1. NUCLEUS -->
+      <a-entity animation="property: rotation; to: 360 360 0; loop: true; dur: 25000; easing: linear">
+        <a-mixin id="proton" geometry="primitive: sphere; radius: 0.3" material="color: #FF0055; metalness: 0.7; roughness: 0.2"></a-mixin>
+        <a-mixin id="neutron" geometry="primitive: sphere; radius: 0.3" material="color: #00DDFF; metalness: 0.7; roughness: 0.2"></a-mixin>
+        
+        <!-- Cluster -->
+        <a-entity mixin="proton" position="0.2 0.2 0"></a-entity>
+        <a-entity mixin="neutron" position="-0.2 -0.2 0"></a-entity>
+        <a-entity mixin="proton" position="0.2 -0.2 0.25"></a-entity>
+        <a-entity mixin="neutron" position="-0.2 0.2 0.1"></a-entity>
+        <a-entity mixin="proton" position="0 0 -0.3"></a-entity>
+        <a-entity mixin="neutron" position="0.1 0.1 -0.1"></a-entity>
+        <a-entity mixin="proton" position="-0.3 0 0.1"></a-entity>
+        <a-entity mixin="neutron" position="0.3 -0.1 0"></a-entity>
+        <a-entity mixin="neutron" position="0 0.3 0.1"></a-entity>
+        <a-entity mixin="proton" position="-0.1 0.2 -0.2"></a-entity>
+        <a-entity mixin="proton" position="0.1 -0.3 0.2"></a-entity>
+        <a-entity mixin="neutron" position="0.1 -0.2 0.2"></a-entity>
+      </a-entity>
+
+      <!-- 2. K-SHELL -->
+      <a-entity id="k-shell">
+         <a-torus radius="1.8" radius-tubular="0.01" rotation="90 0 0" color="#888" opacity="0.4"></a-torus>
+         <a-text class="atom-label" value="Inner Shell" position="2 0 0" color="#00DDFF" width="6" look-at="[camera]"></a-text>
+         
+         <a-entity rotation="0 0 20" orbit-animation="speed: 4">
+            <a-sphere position="1.8 0 0" radius="0.15" color="#00DDFF" material="emissive: #00DDFF; emissiveIntensity: 0.8"></a-sphere>
+            <a-sphere position="-1.8 0 0" radius="0.15" color="#00DDFF" material="emissive: #00DDFF; emissiveIntensity: 0.8"></a-sphere>
+         </a-entity>
+      </a-entity>
+
+      <!-- 3. L-SHELL (Valence) -->
+      <a-entity id="l-shell">
+         <a-torus radius="3.0" radius-tubular="0.01" rotation="90 0 0" color="#888" opacity="0.4"></a-torus>
+         <a-text class="atom-label" value="Valence Shell" position="3.2 0 0" color="#FFD700" width="6" look-at="[camera]"></a-text>
+
+         <a-entity rotation="30 40 0" orbit-animation="speed: 2.5">
+            <a-sphere position="3.0 0 0" radius="0.18" color="#FFD700" material="emissive: #FFD700"></a-sphere>
+            <a-sphere position="-3.0 0 0" radius="0.18" color="#FFD700" material="emissive: #FFD700"></a-sphere>
+         </a-entity>
+         <a-entity rotation="-30 -40 0" orbit-animation="speed: 3">
+            <a-sphere position="0 0 3.0" radius="0.18" color="#FFD700" material="emissive: #FFD700"></a-sphere>
+            <a-sphere position="0 0 -3.0" radius="0.18" color="#FFD700" material="emissive: #FFD700"></a-sphere>
+         </a-entity>
+      </a-entity>
+
+    </a-entity>
+  </a-scene>
+</body>
+</html>
